@@ -1,22 +1,54 @@
 
 import { motion, useScroll, useTransform } from "motion/react";
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import profileImage from "../../assets/images/profile.webp";
 import CameraScene from "./CameraScene";
+import VitruvianShapes from "../VitruvianShapes/VitruvianShapes";
+import arrowDown from "../../assets/arrow-down.svg";
 
 // eslint-disable-next-line react/prop-types
 function Hero({ isLoading, onPortalEnter }) {
   const containerRef = useRef(null);
+  const [showShapes, setShowShapes] = useState(false);
+
+  // Trigger shapes animation ONLY after profile/text animations finish (approx 1.5s - 2s)
+  useEffect(() => {
+    if (!isLoading) {
+        const timer = setTimeout(() => setShowShapes(true), 100); // 1.0s delay (Early start)
+        return () => clearTimeout(timer);
+    }
+  }, [isLoading]);
   
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"]
   });
 
-  const profileOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
-  const profileY = useTransform(scrollYProgress, [0, 0.2], [0, 200]);
-  const profileX = useTransform(scrollYProgress, [0, 0.2], [0, 150]); // Move Right
-  const profileRotate = useTransform(scrollYProgress, [0, 0.2], [0, 15]); // Rotate Clockwise
+  const profileOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
+  const profileY = useTransform(scrollYProgress, [0, 0.15], [0, 200]);
+  const profileX = useTransform(scrollYProgress, [0, 0.15], [0, 150]); 
+  const profileRotate = useTransform(scrollYProgress, [0, 0.15], [0, 15]);
+  const profileBlur = useTransform(scrollYProgress, [0, 0.15], ["blur(0px)", "blur(10px)"]);
+
+  // AIM Text Transforms
+  const aimOpacity = useTransform(scrollYProgress, [0.25, 0.40, 0.55], [0, 1, 0]);
+  const aimBlur = useTransform(scrollYProgress, [0.25, 0.38], ["blur(10px)", "blur(0px)"]);
+
+  // FOCUS Text Transforms
+  const focusOpacity = useTransform(scrollYProgress, [0.55, 0.65, 0.75], [0, 1, 0]);
+  const focusBlur = useTransform(scrollYProgress, [0.55, 0.65], ["blur(10px)", "blur(0px)"]);
+
+  // SHOOT Text Transforms (Big Text)
+  const shootBigOpacity = useTransform(scrollYProgress, [0.80, 0.85, 1.0], [0, 1, 1]); // Stays visible? Or fades? Let's keep it visible at end.
+  const shootBigBlur = useTransform(scrollYProgress, [0.80, 0.85], ["blur(10px)", "blur(0px)"]);
+
+  /* --- TEXT SCROLL TRANSFORMS (Custom) --- */
+  // 1. Faster fade (15%)
+  const textOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
+  // 2. Move UP (-200px)
+  const textY = useTransform(scrollYProgress, [0, 0.15], [0, -150]);
+  // 3. Add Blur (0 -> 10px)
+  const textBlur = useTransform(scrollYProgress, [0, 0.15], ["blur(0px)", "blur(10px)"]);
 
   return (
     <section ref={containerRef} className="relative min-h-[250vh]">
@@ -28,61 +60,132 @@ function Hero({ isLoading, onPortalEnter }) {
         }}
       >
         
+        {/* VITRUVIAN SHAPES BACKGROUND - CENTERED IN HERO */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0  opacity-100">
+            <div className="w-[50vw] h-[50vw] max-w-[600px] max-h-[600px]">
+                <VitruvianShapes trigger={showShapes} />
+            </div>
+        </div>
+
         {/* 3D SCENE LAYER */}
         <CameraScene scrollYProgress={scrollYProgress} onPortalEnter={onPortalEnter} />
 
         {/* HERO CONTENT (Profile) */}
         <div className="w-full h-full flex flex-col justify-end items-center pb-0 relative z-20 pointer-events-none">
           
-          {/* TEXT LAYER */}
+          {/* TEXT LAYER - Wrapped to separate Scroll Parallax from Entry Animation */}
           <motion.div 
-            className="text-center mb-8 flex flex-col items-center z-30 mix-blend-overlay"
-            initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
-            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-            transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
+            className="z-30 mix-blend-overlay mb-8"
             style={{ 
-              opacity: profileOpacity, 
-              y: profileY,
+              opacity: textOpacity, 
+              y: textY,
+              filter: textBlur
             }}
           >
-            <h1 className="text-white text-6xl md:text-8xl font-primary font-medium tracking-tight opacity-90 leading-tight">
-              I see, therefore I am
-            </h1>
-            <motion.p 
-              className="text-amber-100/60 text-sm md:text-base font-secondary tracking-tight uppercase mt-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 1, delay: 1.5 }}
+            <motion.div
+                className="text-center flex flex-col items-center"
+                initial={{ opacity: 0, y: -150, filter: "blur(10px)" }} // -150 is enough to look like "from above"
+                animate={!isLoading ? { opacity: 1, y: 0, filter: "blur(0px)" } : {}}
+                transition={{ duration: 1.2, delay: 0.5, ease: "easeOut" }}
             >
-             NITESH | PHOTOGRAPHY
-            </motion.p>
+                <h1 className="text-white text-6xl md:text-8xl font-primary font-medium tracking-tight opacity-90 leading-tight">
+                I see, therefore I am
+                </h1>
+                <motion.p 
+                className="text-amber-100/60 text-sm md:text-base font-secondary tracking-tight uppercase mt-4"
+                initial={{ opacity: 0 }}
+                animate={!isLoading ? { opacity: 1 } : {}}
+                transition={{ duration: 1.2, delay: 1.5 }}
+                >
+                NITESH | PHOTOGRAPHY
+                </motion.p>
+            </motion.div>
           </motion.div>
 
           <motion.div 
-            className="translate-y-12 mb-12"
-            initial={{ opacity: 0, scale: 0.9, y: 100 }}
-            animate={{ opacity: 1, scale: 1, y: 50 }} 
+            className="translate-y-12 mb-12 relative"
+            initial={{ opacity: 0,filter: "blur(2px)" }}
+            animate={!isLoading ? { opacity: 1,filter: "blur(0px)"  } : {}} 
             transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
             style={{ 
               opacity: profileOpacity, 
-              y: profileY,
+              y: profileY, 
               x: profileX,
-              rotate: profileRotate
+              rotate: profileRotate,
+              filter: profileBlur
             }}
           >
             <img
               src={profileImage}
               alt="Photographer profile"
-              className="size-105 object-contain drop-shadow-2xl pointer-events-none"
+              className="size-95 object-contain drop-shadow-2xl pointer-events-none relative z-10"
             />
           </motion.div>
 
-          {/* INSTRUCTION TEXT - Fades in only at the end of scroll */}
-          <motion.div
-             className="absolute bottom-10 z-50 text-white/50 font-secondary text-sm tracking-widest uppercase pointer-events-none mix-blend-difference"
-             style={{ opacity: useTransform(scrollYProgress, [0.85, 0.95], [0, 1]) }}
+          {/* --- SCROLL SEQUENCE TEXTS --- */}
+          
+          {/* PHASE 1: AIM (Center) - ~30% Scroll */}
+           <motion.div
+             className="absolute inset-0 flex items-center justify-center z-40 pointer-events-none tracking-wider"
+             style={{ 
+                 opacity: aimOpacity,
+                 filter: aimBlur
+             }}
           >
-             [ Click Camera to Enter ]
+             <h2 className="text-white/80 font-primary text-9xl tracking-widest font-bold mix-blend-overlay">AIM</h2>
+          </motion.div>
+
+          {/* PHASE 2: FOCUS (Top) - ~60% Scroll */}
+           <motion.div
+             className="absolute top-20 left-0 right-0 flex justify-center z-40 pointer-events-none tracking-tighter"
+             style={{ 
+                 opacity: focusOpacity,
+                 filter: focusBlur 
+             }}
+          >
+             <h2 className="text-white/80 font-primary text-9xl tracking-widest font-bold mix-blend-overlay">FOCUS</h2>
+          </motion.div>
+
+          {/* PHASE 3: SHOOT (Large Text - Center/Bottom) */}
+          <motion.div
+             className="absolute bottom-28 left-0 right-0 flex justify-center z-40 pointer-events-none tracking-tighter"
+             style={{ 
+                 opacity: shootBigOpacity,
+                 filter: shootBigBlur 
+             }}
+          >
+             <h2 className="text-white/80 font-primary text-9xl tracking-widest font-bold mix-blend-overlay">SHOOT</h2>
+          </motion.div>
+
+          {/* INSTRUCTION (Small & Technical - Bottom) */}
+          <motion.div
+             className="absolute bottom-10 z-50 flex justify-center w-full pointer-events-none mix-blend-difference"
+             style={{ opacity: useTransform(scrollYProgress, [0.8, 0.95], [0, 1]) }}
+          >
+             <motion.p
+               className="text-amber-200/80 font-secondary text-sm tracking-widest uppercase"
+               animate={{ opacity: [0.4, 1, 0.4] }}
+               transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+             >
+               [ CLICK CAMERA TO ENTER ]
+             </motion.p>
+          </motion.div>
+
+          {/* SCROLL HINT (Subtle - Start Only) */}
+          <motion.div
+             className="absolute bottom-8 z-50 flex flex-col items-center justify-center w-full pointer-events-none"
+             style={{ opacity: useTransform(scrollYProgress, [0, 0.7, 0.8], [1, 1, 0]) }}
+             initial={{ opacity: 0 }}
+             animate={!isLoading ? { opacity: 1 } : {}}
+             transition={{ delay: 2.0, duration: 1 }}
+          >
+              <motion.img 
+                src={arrowDown} 
+                alt="Scroll Down"
+                className="w-6 h-6 opacity-60 invert mix-blend-difference"
+                animate={{ y: [0, 10, 0], opacity: [0.4, 1, 0.4] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              />
           </motion.div>
         </div>
         
