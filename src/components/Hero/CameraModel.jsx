@@ -34,7 +34,7 @@ export function CameraModel({ scrollYProgress, onPortalEnter }) {
 
     // Phase 3: Zoom In (0.75 -> 0.9)
     const p3Start = 0.75;
-    const p3End = 0.9;
+    const p3End = 0.8;
     
     // Default / Start State
     let targetY = -10; 
@@ -84,19 +84,15 @@ export function CameraModel({ scrollYProgress, onPortalEnter }) {
        targetRotY = 0;
        targetRotZ = 0;
 
-       // PHASE 3: ZOOM IN
+       // PHASE 3: STABILIZE & FLASH (Simple Zoom)
        if (progress > p3Start) {
           const t = Math.min(1, (progress - p3Start) / (p3End - p3Start));
-          const ease = t * t; // Accelerate in
+          const ease = t * t; 
           
-          targetZ = ease * 5; // Move closer to camera
+          targetZ = ease * 2; // Slight zoom, not deep portal
           
-          // Trigger Transition when deep in zoom
-          if (t > 0.8) {
-             onPortalEnter?.(true);
-          } else {
-             onPortalEnter?.(false);
-          }
+          // Trigger Flash near the end
+          // Removed auto-trigger, rely on click
        }
     }
 
@@ -117,6 +113,13 @@ export function CameraModel({ scrollYProgress, onPortalEnter }) {
       scale={0.025} 
       position={[-5, -10, 0]} 
       rotation={[0, 0, 0]}
+      onClick={(e) => {
+         e.stopPropagation();
+         console.log("Camera clicked!"); // Debug log
+         onPortalEnter?.(true); 
+      }}
+      onPointerOver={() => { document.body.style.cursor = 'pointer'; }}
+      onPointerOut={() => { document.body.style.cursor = 'auto'; }}
     />
   );
 }

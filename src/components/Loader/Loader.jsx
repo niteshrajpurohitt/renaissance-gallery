@@ -1,4 +1,5 @@
 import { motion } from "motion/react";
+import { useEffect } from "react";
 
 import leftHand from "../../assets/images/lefthand.png";
 import rightHand from "../../assets/images/righthand.png";
@@ -10,7 +11,10 @@ import rightHand from "../../assets/images/righthand.png";
 function Loader({ onComplete }) {
   // Trigger onComplete after hands animate in (Hero will be ready)
   // Schedule unlock after hand animation completes
-  setTimeout(() => onComplete?.(), 2000);
+  useEffect(() => {
+    const timer = setTimeout(() => onComplete?.(), 2000);
+    return () => clearTimeout(timer); // Cleanup on unmount
+  }, [onComplete]);
 
   return (
     <motion.div

@@ -1,11 +1,11 @@
 
 import { motion, useScroll, useTransform } from "motion/react";
 import { useRef } from "react";
-import profileImage from "../../assets/images/profile.png";
+import profileImage from "../../assets/images/profile.webp";
 import CameraScene from "./CameraScene";
 
 // eslint-disable-next-line react/prop-types
-function Hero({ isLoading }) {
+function Hero({ isLoading, onPortalEnter }) {
   const containerRef = useRef(null);
   
   const { scrollYProgress } = useScroll({
@@ -29,10 +29,10 @@ function Hero({ isLoading }) {
       >
         
         {/* 3D SCENE LAYER */}
-        <CameraScene scrollYProgress={scrollYProgress} />
+        <CameraScene scrollYProgress={scrollYProgress} onPortalEnter={onPortalEnter} />
 
         {/* HERO CONTENT (Profile) */}
-        <div className="w-full h-full flex flex-col justify-end items-center pb-0 relative z-20">
+        <div className="w-full h-full flex flex-col justify-end items-center pb-0 relative z-20 pointer-events-none">
           
           {/* TEXT LAYER */}
           <motion.div 
@@ -59,9 +59,9 @@ function Hero({ isLoading }) {
           </motion.div>
 
           <motion.div 
-            className="translate-y-12"
+            className="translate-y-12 mb-12"
             initial={{ opacity: 0, scale: 0.9, y: 100 }}
-            animate={{ opacity: 1, scale: 1, y: 50 }} // End at translate-y-12 equiv (~50px)
+            animate={{ opacity: 1, scale: 1, y: 50 }} 
             transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
             style={{ 
               opacity: profileOpacity, 
@@ -75,6 +75,14 @@ function Hero({ isLoading }) {
               alt="Photographer profile"
               className="size-105 object-contain drop-shadow-2xl pointer-events-none"
             />
+          </motion.div>
+
+          {/* INSTRUCTION TEXT - Fades in only at the end of scroll */}
+          <motion.div
+             className="absolute bottom-10 z-50 text-white/50 font-secondary text-sm tracking-widest uppercase pointer-events-none mix-blend-difference"
+             style={{ opacity: useTransform(scrollYProgress, [0.85, 0.95], [0, 1]) }}
+          >
+             [ Click Camera to Enter ]
           </motion.div>
         </div>
         
