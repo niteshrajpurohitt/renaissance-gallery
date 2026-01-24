@@ -5,9 +5,10 @@ import profileImage from "../../assets/images/profile.webp";
 import CameraScene from "./CameraScene";
 import VitruvianShapes from "../VitruvianShapes/VitruvianShapes";
 import arrowDown from "../../assets/arrow-down.svg";
+import VariableProximity from './VariableProximity';
 
 // eslint-disable-next-line react/prop-types
-function Hero({ isLoading, onPortalEnter }) {
+function Hero({ isLoading, onPortalEnter, isPaused = false }) {
   const containerRef = useRef(null);
   const [showShapes, setShowShapes] = useState(false);
 
@@ -68,7 +69,7 @@ function Hero({ isLoading, onPortalEnter }) {
         </div>
 
         {/* 3D SCENE LAYER */}
-        <CameraScene scrollYProgress={scrollYProgress} onPortalEnter={onPortalEnter} />
+        <CameraScene scrollYProgress={scrollYProgress} onPortalEnter={onPortalEnter} isPaused={isPaused} />
 
         {/* HERO CONTENT (Profile) */}
         <div className="w-full h-full flex flex-col justify-end items-center pb-0 relative z-20 pointer-events-none">
@@ -84,13 +85,22 @@ function Hero({ isLoading, onPortalEnter }) {
           >
             <motion.div
                 className="text-center flex flex-col items-center"
-                initial={{ opacity: 0, y: -150, filter: "blur(10px)" }} // -150 is enough to look like "from above"
+                initial={{ opacity: 0, y: -100, filter: "blur(10px)" }} // -150 is enough to look like "from above"
                 animate={!isLoading ? { opacity: 1, y: 0, filter: "blur(0px)" } : {}}
                 transition={{ duration: 1.2, delay: 0.5, ease: "easeOut" }}
             >
-                <h1 className="text-white text-6xl md:text-8xl font-primary font-medium tracking-tight opacity-90 leading-tight">
-                I see, therefore I am
-                </h1>
+                <div style={{ position: 'relative' }} className="pointer-events-auto">
+                  <VariableProximity
+                    label="I see, therefore I am"
+                    className="text-white text-6xl md:text-8xl font-primary font-medium tracking-tight opacity-90 leading-tight cursor-pointer block
+                     text-shadow-black text-shadow-md"
+                    fromFontVariationSettings="'wght' 400"
+                    toFontVariationSettings="'wght' 1000" // Bold on hover
+                    containerRef={containerRef}
+                    radius={100}
+                    falloff="linear"
+                  />
+                </div>
                 <motion.p 
                 className="text-amber-100/60 text-sm md:text-base font-secondary tracking-tight uppercase mt-4"
                 initial={{ opacity: 0 }}

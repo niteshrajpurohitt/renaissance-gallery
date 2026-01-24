@@ -18,7 +18,7 @@ function Loader({ onComplete }) {
 
   return (
     <motion.div
-      className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-[#1c1917] bg-[radial-gradient(circle_at_center,rgba(80,70,60,0.2)_0%,rgba(20,15,10,0.95)_60%)]"
+      className="fixed inset-0 z-100 flex items-center justify-center overflow-hidden bg-[#1c1917] bg-[radial-gradient(circle_at_center,rgba(80,70,60,0.2)_0%,rgba(20,15,10,0.95)_60%)]"
       initial={{ opacity: 1 }}
       exit={{ opacity: 0, transition: { duration: 1.5, ease: "easeInOut" } }}
     >

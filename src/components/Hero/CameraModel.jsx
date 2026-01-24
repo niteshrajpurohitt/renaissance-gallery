@@ -4,12 +4,12 @@ import { useRef } from 'react';
 import * as THREE from 'three';
 import cameraUrl from '../../assets/camera.glb';
 
-export function CameraModel({ scrollYProgress, onPortalEnter }) {
+export function CameraModel({ scrollYProgress, onPortalEnter, isPaused = false }) {
   const { scene } = useGLTF(cameraUrl);
   const group = useRef();
 
   useFrame(() => {
-    if (!group.current) return;
+    if (!group.current || isPaused) return;
     
     // Calculate progress based on scroll
     // Assuming 0 is top of page, and we want animation to happen as we scroll down
@@ -116,6 +116,16 @@ export function CameraModel({ scrollYProgress, onPortalEnter }) {
       onClick={(e) => {
          e.stopPropagation();
          console.log("Camera clicked!"); // Debug log
+         
+         // Audio Trigger
+         try {
+           const audio = new Audio('/src/assets/shutter.mp3');
+           audio.volume = 0.6;
+           audio.play().catch(err => console.warn("Audio play failed:", err));
+         } catch (e) {
+           console.warn("Audio setup failed:", e);
+         }
+
          onPortalEnter?.(true); 
       }}
       onPointerOver={() => { document.body.style.cursor = 'pointer'; }}
