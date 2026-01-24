@@ -3,19 +3,19 @@ import { motion, useScroll, useTransform } from "motion/react";
 import { useRef, useState, useEffect } from "react";
 import profileImage from "../../assets/images/profile.webp";
 import CameraScene from "./CameraScene";
-import VitruvianShapes from "../VitruvianShapes/VitruvianShapes";
+import VitruvianShapes from "./VitruvianShapes";
 import arrowDown from "../../assets/arrow-down.svg";
 import VariableProximity from './VariableProximity';
 
-// eslint-disable-next-line react/prop-types
+
 function Hero({ isLoading, onPortalEnter, isPaused = false }) {
   const containerRef = useRef(null);
   const [showShapes, setShowShapes] = useState(false);
 
-  // Trigger shapes animation ONLY after profile/text animations finish (approx 1.5s - 2s)
+  // Trigger shapes animation ONLY after profile/text animations finish
   useEffect(() => {
     if (!isLoading) {
-        const timer = setTimeout(() => setShowShapes(true), 100); // 1.0s delay (Early start)
+        const timer = setTimeout(() => setShowShapes(true), 100); 
         return () => clearTimeout(timer);
     }
   }, [isLoading]);
@@ -44,11 +44,11 @@ function Hero({ isLoading, onPortalEnter, isPaused = false }) {
   const shootBigBlur = useTransform(scrollYProgress, [0.80, 0.85], ["blur(10px)", "blur(0px)"]);
 
   /* --- TEXT SCROLL TRANSFORMS (Custom) --- */
-  // 1. Faster fade (15%)
+  // 1. Faster fade
   const textOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
-  // 2. Move UP (-200px)
+  // 2. Move UP 
   const textY = useTransform(scrollYProgress, [0, 0.15], [0, -150]);
-  // 3. Add Blur (0 -> 10px)
+  // 3. Add Blur 
   const textBlur = useTransform(scrollYProgress, [0, 0.15], ["blur(0px)", "blur(10px)"]);
 
   return (
@@ -71,10 +71,10 @@ function Hero({ isLoading, onPortalEnter, isPaused = false }) {
         {/* 3D SCENE LAYER */}
         <CameraScene scrollYProgress={scrollYProgress} onPortalEnter={onPortalEnter} isPaused={isPaused} />
 
-        {/* HERO CONTENT (Profile) */}
+        {/* Profile */}
         <div className="w-full h-full flex flex-col justify-end items-center pb-0 relative z-20 pointer-events-none">
           
-          {/* TEXT LAYER - Wrapped to separate Scroll Parallax from Entry Animation */}
+          {/* TEXT LAYER */}
           <motion.div 
             className="z-30 mix-blend-overlay mb-8"
             style={{ 
@@ -85,14 +85,14 @@ function Hero({ isLoading, onPortalEnter, isPaused = false }) {
           >
             <motion.div
                 className="text-center flex flex-col items-center"
-                initial={{ opacity: 0, y: -100, filter: "blur(10px)" }} // -150 is enough to look like "from above"
+                initial={{ opacity: 0, y: -100, filter: "blur(10px)" }} 
                 animate={!isLoading ? { opacity: 1, y: 0, filter: "blur(0px)" } : {}}
                 transition={{ duration: 1.2, delay: 0.5, ease: "easeOut" }}
             >
                 <div style={{ position: 'relative' }} className="pointer-events-auto">
-                  <VariableProximity
+                    <VariableProximity
                     label="I see, therefore I am"
-                    className="text-white text-6xl md:text-8xl font-primary font-medium tracking-tight opacity-90 leading-tight cursor-pointer block
+                    className="text-white text-4xl md:text-8xl font-primary font-medium tracking-tight opacity-90 leading-tight cursor-pointer block
                      text-shadow-black text-shadow-md"
                     fromFontVariationSettings="'wght' 400"
                     toFontVariationSettings="'wght' 1000" // Bold on hover
@@ -102,7 +102,7 @@ function Hero({ isLoading, onPortalEnter, isPaused = false }) {
                   />
                 </div>
                 <motion.p 
-                className="text-amber-100/60 text-sm md:text-base font-secondary tracking-tight uppercase mt-4"
+                className="text-amber-100/60 text-xs md:text-base font-secondary tracking-tight uppercase mt-4"
                 initial={{ opacity: 0 }}
                 animate={!isLoading ? { opacity: 1 } : {}}
                 transition={{ duration: 1.2, delay: 1.5 }}
@@ -128,13 +128,13 @@ function Hero({ isLoading, onPortalEnter, isPaused = false }) {
             <img
               src={profileImage}
               alt="Photographer profile"
-              className="size-95 object-contain drop-shadow-2xl pointer-events-none relative z-10"
+              className="w-64 h-64 md:w-96 md:h-96 object-contain drop-shadow-2xl pointer-events-none relative z-10"
             />
           </motion.div>
 
           {/* --- SCROLL SEQUENCE TEXTS --- */}
           
-          {/* PHASE 1: AIM (Center) - ~30% Scroll */}
+          {/* PHASE 1: AIM*/}
            <motion.div
              className="absolute inset-0 flex items-center justify-center z-40 pointer-events-none tracking-wider"
              style={{ 
@@ -142,10 +142,10 @@ function Hero({ isLoading, onPortalEnter, isPaused = false }) {
                  filter: aimBlur
              }}
           >
-             <h2 className="text-white/80 font-primary text-9xl tracking-widest font-bold mix-blend-overlay">AIM</h2>
+             <h2 className="text-white/80 font-primary text-5xl md:text-9xl tracking-widest font-bold mix-blend-overlay">AIM</h2>
           </motion.div>
 
-          {/* PHASE 2: FOCUS (Top) - ~60% Scroll */}
+          {/* PHASE 2: FOCUS  */}
            <motion.div
              className="absolute top-20 left-0 right-0 flex justify-center z-40 pointer-events-none tracking-tighter"
              style={{ 
@@ -153,10 +153,10 @@ function Hero({ isLoading, onPortalEnter, isPaused = false }) {
                  filter: focusBlur 
              }}
           >
-             <h2 className="text-white/80 font-primary text-9xl tracking-widest font-bold mix-blend-overlay">FOCUS</h2>
+             <h2 className="text-white/80 font-primary text-5xl md:text-9xl tracking-widest font-bold mix-blend-overlay">FOCUS</h2>
           </motion.div>
 
-          {/* PHASE 3: SHOOT (Large Text - Center/Bottom) */}
+          {/* PHASE 3: SHOOT */}
           <motion.div
              className="absolute bottom-28 left-0 right-0 flex justify-center z-40 pointer-events-none tracking-tighter"
              style={{ 
@@ -164,10 +164,10 @@ function Hero({ isLoading, onPortalEnter, isPaused = false }) {
                  filter: shootBigBlur 
              }}
           >
-             <h2 className="text-white/80 font-primary text-9xl tracking-widest font-bold mix-blend-overlay">SHOOT</h2>
+             <h2 className="text-white/80 font-primary text-5xl md:text-9xl tracking-widest font-bold mix-blend-overlay">SHOOT</h2>
           </motion.div>
 
-          {/* INSTRUCTION (Small & Technical - Bottom) */}
+          {/* INSTRUCTION */}
           <motion.div
              className="absolute bottom-10 z-50 flex justify-center w-full pointer-events-none mix-blend-difference"
              style={{ opacity: useTransform(scrollYProgress, [0.8, 0.95], [0, 1]) }}
@@ -177,11 +177,11 @@ function Hero({ isLoading, onPortalEnter, isPaused = false }) {
                animate={{ opacity: [0.4, 1, 0.4] }}
                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
              >
-               [ CLICK CAMERA TO ENTER ]
+               [ CLICK CAMERA TO VIEW PHOTOS ]
              </motion.p>
           </motion.div>
 
-          {/* SCROLL HINT (Subtle - Start Only) */}
+          {/* SCROLL HINT*/}
           <motion.div
              className="absolute bottom-8 z-50 flex flex-col items-center justify-center w-full pointer-events-none"
              style={{ opacity: useTransform(scrollYProgress, [0, 0.7, 0.8], [1, 1, 0]) }}

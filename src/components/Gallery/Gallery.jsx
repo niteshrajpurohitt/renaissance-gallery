@@ -10,14 +10,13 @@ function Gallery({ visible, onBack }) {
     }
   }, [visible]);
 
-  // Remove early return so we render (invisible) for layout calculation
-  // if (!visible) return null;
+
 
   return (
     <div 
         className={`relative z-50 min-h-screen px-4 py-16 md:px-8 lg:px-12 transition-opacity duration-1000 ${visible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
     >
-      {/* FIXED BACKGROUND - Stays in place while scrolling */}
+      
       <div className="fixed inset-0 bg-[#1c1917] bg-[radial-gradient(circle_at_center,rgba(80,70,60,0.2)_0%,rgba(20,15,10,0.95)_60%)] -z-10 pointer-events-none"></div>
 
       {/* BACK BUTTON */}

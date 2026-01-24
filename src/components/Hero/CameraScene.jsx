@@ -13,12 +13,7 @@ export default function CameraScene({ scrollYProgress, onPortalEnter, isPaused =
         
         <Suspense fallback={null}>
           <CameraModel scrollYProgress={scrollYProgress} onPortalEnter={onPortalEnter} isPaused={isPaused} />
-          {/* 
-            Available Presets: 
-            "sunset" (Warm/Orange), "dawn" (Cool/Rising), "night" (Dark), 
-            "warehouse" (Industrial), "forest" (Green), "apartment" (Warm Home), 
-            "studio" (Clean/White), "city" (Bright), "park" (Green/Open), "lobby" (Warm/Commercial) 
-          */}
+        
           <Environment preset="city" />
           <ContactShadows position={[0, -4, 0]} opacity={0.4} scale={10} blur={2.5} far={4} />
         </Suspense>

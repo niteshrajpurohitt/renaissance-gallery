@@ -1,7 +1,6 @@
 import { motion } from "motion/react";
 
-// Custom Orbiting Grain Loader (Galileo/Atomic)
-export default function OrbitLoader({ onComplete }) {
+export default function OrbitLoader({ onComplete, text = "Developing Photos..." }) {
   return (
     <motion.div
       className="fixed inset-0 z-200 bg-[#1c1917] bg-[radial-gradient(circle_at_center,rgba(80,70,60,0.2)_0%,rgba(20,15,10,0.95)_60%)] flex items-center justify-center pointer-events-none"
@@ -10,7 +9,6 @@ export default function OrbitLoader({ onComplete }) {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.8 }}
       onAnimationComplete={(def) => {
-         // If we just finished fading IN (opacity: 1), wait 2.5s then complete
          if (def.opacity === 1) {
             setTimeout(() => {
                 onComplete?.();
@@ -73,15 +71,6 @@ export default function OrbitLoader({ onComplete }) {
            </motion.svg>
         </div>
 
-        {/* LOADING TEXT - Minimal */}
-        <motion.span 
-            className="text-[#d4af37]/80 font-serif italic text-sm tracking-[0.2em]"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0.3, 1, 0.3] }}
-            transition={{ opacity: { duration: 2, repeat: Infinity } }}
-        >
-            Developing Photos...
-        </motion.span>
       </div>
     </motion.div>
   );

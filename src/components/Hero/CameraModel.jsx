@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import { useRef } from 'react';
 import * as THREE from 'three';
 import cameraUrl from '../../assets/camera.glb';
+import shutterSound from '../../assets/shutter.mp3';
 
 export function CameraModel({ scrollYProgress, onPortalEnter, isPaused = false }) {
   const { scene } = useGLTF(cameraUrl);
@@ -15,15 +16,7 @@ export function CameraModel({ scrollYProgress, onPortalEnter, isPaused = false }
     // Assuming 0 is top of page, and we want animation to happen as we scroll down
     const progress = scrollYProgress.get(); 
     
-    // Map progress to Y position
-    // Start from below (-10) and move to center (0)
-    // We want this to happen relatively quickly in the scroll, say 0 to 0.5 range
-    // or we might want to map 0->1 of the hero section scroll
-    
-    // Let's assume we want it to enter as profile leaves.
-    // Profile leaves 0 -> 0.3
-    // Camera enters 0.2 -> 0.5
-    
+   
     // Phase 1: Entry -> Top (0.1 -> 0.4)
     const p1Start = 0.1;
     const p1End = 0.4;
@@ -91,12 +84,11 @@ export function CameraModel({ scrollYProgress, onPortalEnter, isPaused = false }
           
           targetZ = ease * 2; // Slight zoom, not deep portal
           
-          // Trigger Flash near the end
-          // Removed auto-trigger, rely on click
+          
        }
     }
 
-    // Smooth interop (Snappy but smoothed to avoid jitter)
+    // Smooth interop 
     const damp = 0.5;
     group.current.position.y = THREE.MathUtils.lerp(group.current.position.y, targetY, damp);
     group.current.position.x = THREE.MathUtils.lerp(group.current.position.x, targetX, damp);
@@ -106,20 +98,23 @@ export function CameraModel({ scrollYProgress, onPortalEnter, isPaused = false }
     group.current.rotation.z = THREE.MathUtils.lerp(group.current.rotation.z, targetRotZ, damp);
   });
 
+  // Responsive Scale (Simple check)
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const baseScale = isMobile ? 0.018 : 0.025;
+
   return (
     <primitive 
       ref={group} 
       object={scene} 
-      scale={0.025} 
+      scale={baseScale} 
       position={[-5, -10, 0]} 
       rotation={[0, 0, 0]}
       onClick={(e) => {
          e.stopPropagation();
-         console.log("Camera clicked!"); // Debug log
          
          // Audio Trigger
          try {
-           const audio = new Audio('/src/assets/shutter.mp3');
+           const audio = new Audio(shutterSound);
            audio.volume = 0.6;
            audio.play().catch(err => console.warn("Audio play failed:", err));
          } catch (e) {
