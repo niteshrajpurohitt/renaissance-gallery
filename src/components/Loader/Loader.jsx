@@ -1,16 +1,31 @@
 import { motion } from "motion/react";
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 
 import leftHand from "../../assets/images/lefthand.png";
 import rightHand from "../../assets/images/righthand.png";
 
 function Loader({ onComplete }) {
+  const [imagesReady, setImagesReady] = React.useState(false);
+  const [loadedCount, setLoadedCount] = React.useState(0);
+
   // Trigger onComplete after hands animate in (Hero will be ready)
-  
   useEffect(() => {
-    const timer = setTimeout(() => onComplete?.(), 2000);
-    return () => clearTimeout(timer); // Cleanup on unmount
-  }, [onComplete]);
+    if (imagesReady) {
+        const timer = setTimeout(() => onComplete?.(), 2500); // Wait for animation + hold
+        return () => clearTimeout(timer);
+    }
+  }, [onComplete, imagesReady]);
+
+  // Check if both hands are loaded
+  useEffect(() => {
+    if (loadedCount >= 2) {
+        setImagesReady(true);
+    }
+  }, [loadedCount]);
+
+  const handleImageLoad = () => {
+    setLoadedCount(prev => prev + 1);
+  };
 
   return (
     <motion.div
@@ -31,20 +46,30 @@ function Loader({ onComplete }) {
           <motion.div
             className="absolute right-1/2 mr-2 md:mr-4 mask-l-from-20%"
             initial={{ x: -100, y: 50, rotate: 10, opacity: 0}}
-            animate={{ x: 0, y: 0, rotate: 0, opacity: 1 }}
+            animate={imagesReady ? { x: 0, y: 0, rotate: 0, opacity: 1 } : { x: -100, y: 50, rotate: 10, opacity: 0}}
             transition={{ duration: 1, ease: "easeOut" }}
           >
-            <img src={leftHand} alt="Left Hand" className="w-[150px] md:w-[300px] object-contain drop-shadow-xl"/>
+            <img 
+                src={leftHand} 
+                alt="Left Hand" 
+                onLoad={handleImageLoad}
+                className="w-[150px] md:w-[300px] object-contain drop-shadow-xl"
+            />
           </motion.div>
 
           {/* RIGHT HAND */}
           <motion.div
             className="absolute left-1/2 ml-2 md:ml-4 mask-r-from-20%"
             initial={{ x: 100, y: -50, rotate: -10, opacity: 0 }}
-            animate={{ x: 0, y: 0, rotate: 0, opacity: 1 }}
+            animate={imagesReady ? { x: 0, y: 0, rotate: 0, opacity: 1 } : { x: 100, y: -50, rotate: -10, opacity: 0}}
             transition={{ duration: 1, ease: "easeOut" }}
           >
-            <img src={rightHand} alt="Right Hand" className="w-[150px] md:w-[300px] object-contain drop-shadow-xl"/>
+            <img 
+                src={rightHand} 
+                alt="Right Hand" 
+                onLoad={handleImageLoad}
+                className="w-[150px] md:w-[300px] object-contain drop-shadow-xl"
+            />
           </motion.div>
         </motion.div>
 

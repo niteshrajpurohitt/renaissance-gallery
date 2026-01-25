@@ -9,6 +9,7 @@ function AppLayout() {
   const [isLoading, setIsLoading] = useState(true);
   const [triggerTransition, setTriggerTransition] = useState(false);
   const [showGallery, setShowGallery] = useState(false);
+  const [galleryReady, setGalleryReady] = useState(false);
 
   // Prevent browser scroll restoration and force scroll to top
   useEffect(() => {
@@ -26,6 +27,7 @@ function AppLayout() {
   const handleTransitionStart = (val) => {
       if (val && !triggerTransition) {
           setTriggerTransition(true);
+          setGalleryReady(false); // Reset readiness
           // PRE-MOUNT GALLERY: Mount it after a delay so Loader covers screen
           setTimeout(() => {
              setShowGallery(true); 
@@ -42,6 +44,7 @@ function AppLayout() {
   const handleBack = () => {
    
     setTriggerTransition(true);
+    setGalleryReady(true); // Immediate ready for back transition (optional, or just logic)
     setTimeout(() => {
         setShowGallery(false);
         window.scrollTo(0, 0);
@@ -55,6 +58,7 @@ function AppLayout() {
       <AnimatePresence>
         {triggerTransition && (
             <OrbitLoader 
+                canFinish={galleryReady}
                 onComplete={handleLoaderComplete} 
             />
         )}
@@ -71,7 +75,11 @@ function AppLayout() {
 
       {/* GALLERY SECTION */}
       {showGallery && (
-        <Gallery visible={!triggerTransition} onBack={handleBack} />
+        <Gallery 
+            visible={!triggerTransition} 
+            onBack={handleBack} 
+            onImagesLoaded={() => setGalleryReady(true)}
+        />
       )}
 
       {/* INITIAL SITE LOADER */}

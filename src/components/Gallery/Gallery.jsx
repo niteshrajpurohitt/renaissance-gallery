@@ -1,8 +1,33 @@
-import { useEffect } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { motion } from "motion/react";
 import images from "./images.json";
 
-function Gallery({ visible, onBack }) {
+const INITIAL_LOAD = 12;
+const LOAD_MORE_COUNT = 12;
+
+function Gallery({ visible, onBack, onImagesLoaded }) {
+  const [displayedImages, setDisplayedImages] = useState([]);
+  const [loadedCount, setLoadedCount] = useState(0);
+  const observerTarget = useRef(null);
+
+  // Initialize gallery
+  useEffect(() => {
+    setDisplayedImages(images.slice(0, INITIAL_LOAD));
+  }, []);
+
+  // Check if enough images are loaded to show
+  useEffect(() => {
+      // If we have loaded at least 8 images (or all if less than 8), signal ready
+      const threshold = Math.min(8, displayedImages.length); 
+      if (loadedCount >= threshold && displayedImages.length > 0) {
+          onImagesLoaded?.();
+      }
+  }, [loadedCount, displayedImages.length, onImagesLoaded]);
+
+  const handleImageLoad = () => {
+    setLoadedCount(prev => prev + 1);
+  };
+
   // Scroll to top when gallery becomes visible
   useEffect(() => {
     if (visible) {
@@ -10,6 +35,29 @@ function Gallery({ visible, onBack }) {
     }
   }, [visible]);
 
+  // Infinite Scroll Observer
+  const handleObserver = useCallback((entries) => {
+    const [target] = entries;
+    if (target.isIntersecting) {
+        setDisplayedImages((prev) => {
+            if (prev.length >= images.length) return prev;
+            return images.slice(0, prev.length + LOAD_MORE_COUNT);
+        });
+    }
+  }, []);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(handleObserver, {
+      root: null,
+      rootMargin: "200px",
+      threshold: 0,
+    });
+    if (observerTarget.current) observer.observe(observerTarget.current);
+    
+    return () => {
+      if (observerTarget.current) observer.unobserve(observerTarget.current);
+    };
+  }, [handleObserver, displayedImages.length]);
 
 
   return (
@@ -32,33 +80,59 @@ function Gallery({ visible, onBack }) {
       {/* SUBTLE BLUR AT TOP */}
       <div className="fixed top-0 left-0 right-0 h-28 bg-gradient-to-b from-[#1c1917] to-transparent pointer-events-none z-40"></div>
       
-      <div className="max-w-[1400px] mx-auto">
+      <div className="max-w-[1400px] mx-auto min-h-screen">
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.5, ease: "easeOut" }}
-            className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 gap-6 space-y-6"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 [counter-reset:gallery]"
         >
-            {images.map((image, index) => (
+            {displayedImages.map((image, index) => (
                 <motion.div
-                    key={image}
-                    className="break-inside-avoid relative group w-full"
-                    initial={{ opacity: 0, y: 50 }}
+                    key={`${image}-${index}`}
+                    className="relative group w-full aspect-4/5 select-none [counter-increment:gallery]" 
+                    initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "-50px" }}
-                    transition={{ duration: 0.5, ease: "easeOut", delay: index < 12 ? index * 0.1 : 0 }}
+                    viewport={{ once: true, margin: "0px" }}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
                 >
-                    <div className="relative overflow-hidden rounded-xl shadow-lg transition-all duration-500 group-hover:shadow-2xl">
-                        <img
-                            src={`/gallery/${image}`}
-                            alt={`Gallery ${index + 1}`}
-                            loading="lazy"
-                            className="w-full h-auto block transition-transform duration-700 group-hover:scale-105"
-                        />
+                    {/* Golden Frame Container */}
+                    <div className="w-full h-full p-[6px] bg-[#1c1917] border border-[#d4af37]/40 shadow-sm relative overflow-hidden transition-colors duration-500 hover:border-[#d4af37]">
+                        
+                        {/* Matting/Inner Border */}
+                        <div className="w-full h-full relative overflow-hidden border border-[#d4af37]/20">
+                            <img
+                                src={`/gallery/${image}`}
+                                alt={`Gallery ${index + 1}`}
+                                loading="eager" 
+                                decoding="async"
+                                onLoad={handleImageLoad}
+                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                            />
+                            
+                            {/* Vignette Overlay (Subtle) */}
+                            <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,transparent_50%,rgba(0,0,0,0.2)_100%)]"></div>
+                        </div>
+
+                        {/* Roman Numeral Plaque */}
+                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-10">
+                            <div className="bg-[#1c1917]/90 px-3 py-1 border border-[#d4af37]/50 backdrop-blur-sm">
+                                <span className="font-serif text-[#d4af37] text-xs tracking-[0.2em] font-light after:content-[counter(gallery,upper-roman)]">
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </motion.div>
             ))}
         </motion.div>
+
+        {/* LOADING SENTINEL */}
+        <div ref={observerTarget} className="h-20 w-full flex justify-center items-center mt-8">
+             {displayedImages.length < images.length && (
+                 <div className="w-2 h-2 bg-amber-500/50 rounded-full animate-ping"></div>
+             )}
+        </div>
+
       </div>
       
       {/* SUBTLE BLUR AT BOTTOM */}

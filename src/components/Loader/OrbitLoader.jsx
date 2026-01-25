@@ -1,6 +1,24 @@
+import React from "react";
 import { motion } from "motion/react";
 
-export default function OrbitLoader({ onComplete, text = "Developing Photos..." }) {
+export default function OrbitLoader({ onComplete, canFinish = true, text = "Developing Photos..." }) {
+  const [minTimeElapsed, setMinTimeElapsed] = React.useState(false);
+
+  // Minimum duration timer
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+        setMinTimeElapsed(true);
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Check exit condition
+  React.useEffect(() => {
+    if (minTimeElapsed && canFinish) {
+        onComplete?.();
+    }
+  }, [minTimeElapsed, canFinish, onComplete]);
+
   return (
     <motion.div
       className="fixed inset-0 z-200 bg-[#1c1917] bg-[radial-gradient(circle_at_center,rgba(80,70,60,0.2)_0%,rgba(20,15,10,0.95)_60%)] flex items-center justify-center pointer-events-none"
@@ -8,13 +26,6 @@ export default function OrbitLoader({ onComplete, text = "Developing Photos..." 
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.8 }}
-      onAnimationComplete={(def) => {
-         if (def.opacity === 1) {
-            setTimeout(() => {
-                onComplete?.();
-            }, 2500); 
-         }
-      }}
     >
       <div className="relative flex flex-col items-center justify-center gap-12 w-full h-full">
         
@@ -70,6 +81,15 @@ export default function OrbitLoader({ onComplete, text = "Developing Photos..." 
 
            </motion.svg>
         </div>
+
+        <motion.p 
+            className="absolute mt-64 text-amber-400/80 font-mono text-sm tracking-[0.3em] uppercase animate-pulse"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5, duration: 1 }}
+        >
+            {text}
+        </motion.p>
 
       </div>
     </motion.div>
