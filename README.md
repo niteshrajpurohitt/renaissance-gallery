@@ -3,7 +3,7 @@
 *When I'm not coding, I'm clicking photos. I wanted a cool place to show them off, so I made this. It's my digital gallery inspired by the Renaissance period and vintage cameras.*
 
 ## 🛠️ Tech Stack
-**React 19, TailwindCSS (v4), Framer Motion, Three.js, React Three Fiber**
+**React 19, TailwindCSS (v4),Motion for react, Three.js, React Three Fiber**
 
 ## 🎨 Inspirations
 
