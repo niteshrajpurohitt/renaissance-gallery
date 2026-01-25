@@ -92,17 +92,17 @@ function Hero({ isLoading, onPortalEnter, isPaused = false }) {
                 <div style={{ position: 'relative' }} className="pointer-events-auto">
                     <VariableProximity
                     label="I see, therefore I am"
-                    className="text-white text-4xl md:text-8xl font-primary font-medium tracking-tight opacity-90 leading-tight cursor-pointer block
+                    className="text-white text-5xl md:text-8xl font-primary font-medium tracking-tight opacity-100 leading-tight cursor-pointer block
                      text-shadow-black text-shadow-md"
                     fromFontVariationSettings="'wght' 400"
-                    toFontVariationSettings="'wght' 1000" // Bold on hover
+                    toFontVariationSettings="'wght' 1200" // Bold on hover
                     containerRef={containerRef}
                     radius={100}
                     falloff="linear"
                   />
                 </div>
                 <motion.p 
-                className="text-amber-100/60 text-xs md:text-base font-secondary tracking-tight uppercase mt-4"
+                className="text-amber-100/60 text-xl md:text-base font-secondary tracking-tight uppercase mt-4"
                 initial={{ opacity: 0 }}
                 animate={!isLoading ? { opacity: 1 } : {}}
                 transition={{ duration: 1.2, delay: 1.5 }}
@@ -128,7 +128,7 @@ function Hero({ isLoading, onPortalEnter, isPaused = false }) {
             <img
               src={profileImage}
               alt="Photographer profile"
-              className="w-64 h-64 md:w-96 md:h-96 object-contain drop-shadow-2xl pointer-events-none relative z-10"
+              className="w-80 h-80 md:w-96 md:h-96 object-contain drop-shadow-2xl pointer-events-none relative z-10"
             />
           </motion.div>
 
@@ -142,7 +142,7 @@ function Hero({ isLoading, onPortalEnter, isPaused = false }) {
                  filter: aimBlur
              }}
           >
-             <h2 className="text-white/80 font-primary text-5xl md:text-9xl tracking-widest font-bold mix-blend-overlay">AIM</h2>
+             <h2 className="text-white/80 font-primary text-7xl md:text-9xl tracking-widest font-bold mix-blend-overlay">AIM</h2>
           </motion.div>
 
           {/* PHASE 2: FOCUS  */}
@@ -153,7 +153,7 @@ function Hero({ isLoading, onPortalEnter, isPaused = false }) {
                  filter: focusBlur 
              }}
           >
-             <h2 className="text-white/80 font-primary text-5xl md:text-9xl tracking-widest font-bold mix-blend-overlay">FOCUS</h2>
+             <h2 className="text-white/80 font-primary text-7xl md:text-9xl tracking-widest font-bold mix-blend-overlay">FOCUS</h2>
           </motion.div>
 
           {/* PHASE 3: SHOOT */}
@@ -164,7 +164,7 @@ function Hero({ isLoading, onPortalEnter, isPaused = false }) {
                  filter: shootBigBlur 
              }}
           >
-             <h2 className="text-white/80 font-primary text-5xl md:text-9xl tracking-widest font-bold mix-blend-overlay">SHOOT</h2>
+             <h2 className="text-white/80 font-primary text-7xl md:text-9xl tracking-widest font-bold mix-blend-overlay">SHOOT</h2>
           </motion.div>
 
           {/* INSTRUCTION */}
@@ -192,7 +192,7 @@ function Hero({ isLoading, onPortalEnter, isPaused = false }) {
               <motion.img 
                 src={arrowDown} 
                 alt="Scroll Down"
-                className="w-6 h-6 opacity-60 invert mix-blend-difference"
+                className="w-7 h-7 opacity-60 invert mix-blend-difference"
                 animate={{ y: [0, 10, 0], opacity: [0.4, 1, 0.4] }}
                 transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
               />
