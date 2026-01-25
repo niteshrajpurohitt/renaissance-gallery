@@ -116,7 +116,7 @@ function Gallery({ visible, onBack, onImagesLoaded }) {
 
                         {/* Roman Numeral Plaque */}
                         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-10">
-                            <div className="bg-[#1c1917]/90 px-3 py-1 border border-[#d4af37]/50 backdrop-blur-sm">
+                            <div className="bg-[#1c1917]/95 px-3 py-1 border border-[#d4af37]/50">
                                 <span className="font-serif text-[#d4af37] text-xs tracking-[0.2em] font-light after:content-[counter(gallery,upper-roman)]">
                                 </span>
                             </div>
