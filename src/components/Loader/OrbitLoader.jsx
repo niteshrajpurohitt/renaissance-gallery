@@ -3,14 +3,16 @@ import { motion } from "motion/react";
 
 export default function OrbitLoader({ onComplete, canFinish = true, text = "Developing Photos..." }) {
   const [minTimeElapsed, setMinTimeElapsed] = React.useState(false);
+  const minDuration =
+    typeof window !== "undefined" && window.innerWidth < 768 ? 1100 : 1500;
 
   // Minimum duration timer
   React.useEffect(() => {
     const timer = setTimeout(() => {
         setMinTimeElapsed(true);
-    }, 2500);
+    }, minDuration);
     return () => clearTimeout(timer);
-  }, []);
+  }, [minDuration]);
 
   // Check exit condition
   React.useEffect(() => {
