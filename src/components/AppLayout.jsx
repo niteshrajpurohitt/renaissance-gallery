@@ -65,13 +65,13 @@ function AppLayout() {
       </AnimatePresence>
 
       {/* HERO SECTION */}
-      <div style={{ display: showGallery ? 'none' : 'block' }}>
+      {!showGallery && (
         <Hero 
             isLoading={isLoading}
-            isPaused={showGallery}
+            isPaused={false}
             onPortalEnter={handleTransitionStart} 
         />
-      </div>
+      )}
 
       {/* GALLERY SECTION */}
       {showGallery && (

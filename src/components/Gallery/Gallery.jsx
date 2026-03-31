@@ -4,60 +4,84 @@ import images from "./images.json";
 
 const INITIAL_LOAD = 12;
 const LOAD_MORE_COUNT = 12;
+const READY_THRESHOLD = 8;
 
 function Gallery({ visible, onBack, onImagesLoaded }) {
-  const [displayedImages, setDisplayedImages] = useState([]);
-  const [loadedCount, setLoadedCount] = useState(0);
+  const [displayedImages, setDisplayedImages] = useState(() =>
+    images.slice(0, INITIAL_LOAD),
+  );
   const observerTarget = useRef(null);
-
-  // Initialize gallery
-  useEffect(() => {
-    setDisplayedImages(images.slice(0, INITIAL_LOAD));
-  }, []);
+  const loadedCountRef = useRef(0);
+  const readyNotifiedRef = useRef(false);
 
   // Check if enough images are loaded to show
-  useEffect(() => {
-      // If we have loaded at least 8 images (or all if less than 8), signal ready
-      const threshold = Math.min(8, displayedImages.length); 
-      if (loadedCount >= threshold && displayedImages.length > 0) {
-          onImagesLoaded?.();
-      }
-  }, [loadedCount, displayedImages.length, onImagesLoaded]);
+  const handleImageLoad = useCallback(() => {
+    if (readyNotifiedRef.current) return;
 
-  const handleImageLoad = () => {
-    setLoadedCount(prev => prev + 1);
-  };
+    loadedCountRef.current += 1;
+    const threshold = Math.min(READY_THRESHOLD, displayedImages.length);
 
-  // Scroll to top when gallery becomes visible
-  useEffect(() => {
-    if (visible) {
-      window.scrollTo({ top: 0, behavior: "instant" });
+    if (loadedCountRef.current >= threshold && displayedImages.length > 0) {
+      readyNotifiedRef.current = true;
+      onImagesLoaded?.();
     }
-  }, [visible]);
+  }, [displayedImages.length, onImagesLoaded]);
 
-  // Infinite Scroll Observer
+  useEffect(() => {
+    if (readyNotifiedRef.current) return;
+
+    const threshold = Math.min(READY_THRESHOLD, displayedImages.length);
+    if (loadedCountRef.current >= threshold && displayedImages.length > 0) {
+      readyNotifiedRef.current = true;
+      onImagesLoaded?.();
+    }
+  }, [displayedImages.length, onImagesLoaded]);
+
   const handleObserver = useCallback((entries) => {
     const [target] = entries;
-    if (target.isIntersecting) {
-        setDisplayedImages((prev) => {
-            if (prev.length >= images.length) return prev;
-            return images.slice(0, prev.length + LOAD_MORE_COUNT);
-        });
-    }
+    if (!target?.isIntersecting) return;
+
+    setDisplayedImages((prev) => {
+      if (prev.length >= images.length) return prev;
+      return images.slice(0, prev.length + LOAD_MORE_COUNT);
+    });
   }, []);
 
   useEffect(() => {
+    const node = observerTarget.current;
+    if (!node) return;
+
     const observer = new IntersectionObserver(handleObserver, {
       root: null,
       rootMargin: "200px",
       threshold: 0,
     });
-    if (observerTarget.current) observer.observe(observerTarget.current);
-    
+
+    observer.observe(node);
+
     return () => {
-      if (observerTarget.current) observer.unobserve(observerTarget.current);
+      observer.unobserve(node);
+      observer.disconnect();
     };
-  }, [handleObserver, displayedImages.length]);
+  }, [handleObserver]);
+
+  useEffect(() => {
+    if (!visible) return;
+
+    loadedCountRef.current = 0;
+    readyNotifiedRef.current = false;
+    setDisplayedImages(images.slice(0, INITIAL_LOAD));
+  }, [visible]);
+
+  useEffect(() => {
+    if (visible) {
+      window.scrollTo({ top: 0, behavior: "auto" });
+    }
+  }, [visible]);
+
+  const getLoadingStrategy = (index) => {
+    return index < 2 ? "eager" : "lazy";
+  };
 
 
   return (
@@ -88,13 +112,9 @@ function Gallery({ visible, onBack, onImagesLoaded }) {
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 [counter-reset:gallery]"
         >
             {displayedImages.map((image, index) => (
-                <motion.div
+                <div
                     key={`${image}-${index}`}
                     className="relative group w-full aspect-4/5 select-none [counter-increment:gallery]" 
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "0px" }}
-                    transition={{ duration: 0.5, ease: "easeOut" }}
                 >
                     {/* Golden Frame Container */}
                     <div className="w-full h-full p-[6px] bg-[#1c1917] border border-[#d4af37]/40 shadow-sm relative overflow-hidden transition-colors duration-500 hover:border-[#d4af37]">
@@ -104,7 +124,7 @@ function Gallery({ visible, onBack, onImagesLoaded }) {
                             <img
                                 src={`/gallery/${image}`}
                                 alt={`Gallery ${index + 1}`}
-                                loading="eager" 
+                                loading={getLoadingStrategy(index)}
                                 decoding="async"
                                 onLoad={handleImageLoad}
                                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
@@ -122,7 +142,7 @@ function Gallery({ visible, onBack, onImagesLoaded }) {
                             </div>
                         </div>
                     </div>
-                </motion.div>
+                </div>
             ))}
         </motion.div>
 
