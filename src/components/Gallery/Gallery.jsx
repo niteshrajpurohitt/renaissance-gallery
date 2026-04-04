@@ -4,7 +4,8 @@ import images from "./images.json";
 
 const INITIAL_LOAD = 12;
 const LOAD_MORE_COUNT = 12;
-const READY_THRESHOLD = 8;
+const EAGER_LOAD_COUNT = 4;
+const READY_THRESHOLD = 2;
 
 function Gallery({ visible, onBack, onImagesLoaded }) {
   const [displayedImages, setDisplayedImages] = useState(() =>
@@ -15,7 +16,7 @@ function Gallery({ visible, onBack, onImagesLoaded }) {
   const readyNotifiedRef = useRef(false);
 
   // Check if enough images are loaded to show
-  const handleImageLoad = useCallback(() => {
+  const notifyReady = useCallback(() => {
     if (readyNotifiedRef.current) return;
 
     loadedCountRef.current += 1;
@@ -80,7 +81,7 @@ function Gallery({ visible, onBack, onImagesLoaded }) {
   }, [visible]);
 
   const getLoadingStrategy = (index) => {
-    return index < 2 ? "eager" : "lazy";
+    return index < EAGER_LOAD_COUNT ? "eager" : "lazy";
   };
 
 
@@ -126,7 +127,8 @@ function Gallery({ visible, onBack, onImagesLoaded }) {
                                 alt={`Gallery ${index + 1}`}
                                 loading={getLoadingStrategy(index)}
                                 decoding="async"
-                                onLoad={handleImageLoad}
+                                onLoad={notifyReady}
+                                onError={notifyReady}
                                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                             />
                             

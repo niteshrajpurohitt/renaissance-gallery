@@ -5,6 +5,8 @@ import Hero from "./Hero/Hero";
 import Gallery from "./Gallery/Gallery";
 import OrbitLoader from "./Loader/OrbitLoader";
 
+const GALLERY_READY_TIMEOUT = 4500;
+
 function AppLayout() {
   const [isLoading, setIsLoading] = useState(true);
   const [triggerTransition, setTriggerTransition] = useState(false);
@@ -50,6 +52,16 @@ function AppLayout() {
         window.scrollTo(0, 0);
     }, 1000);
   };
+
+  useEffect(() => {
+    if (!triggerTransition || galleryReady) return;
+
+    const timer = setTimeout(() => {
+      setGalleryReady(true);
+    }, GALLERY_READY_TIMEOUT);
+
+    return () => clearTimeout(timer);
+  }, [galleryReady, triggerTransition]);
 
   return (
     <div className="relative min-h-screen">
