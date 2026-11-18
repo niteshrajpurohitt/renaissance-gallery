@@ -1,16 +1,46 @@
 
 import { motion, useScroll, useTransform } from "motion/react";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
+import shutterSound from "../../assets/shutter.mp3";
 import profileImage from "../../assets/images/profile.webp";
 import CameraScene from "./CameraScene";
 import VitruvianShapes from "./VitruvianShapes";
 import arrowDown from "../../assets/arrow-down.svg";
 import VariableProximity from './VariableProximity';
+import Viewfinder from "./Viewfinder";
+import { SITE } from "../../config";
 
+
+function InstagramIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" {...props}>
+      <rect x="3" y="3" width="18" height="18" rx="5" />
+      <circle cx="12" cy="12" r="4.2" />
+      <circle cx="17.4" cy="6.6" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
 
 function Hero({ isLoading, onPortalEnter, isPaused = false }) {
   const containerRef = useRef(null);
   const [showShapes, setShowShapes] = useState(false);
+  const firedRef = useRef(false);
+
+  // Shutter: click sound -> gallery transition
+  const triggerShutter = useCallback(() => {
+    if (firedRef.current) return;
+    firedRef.current = true;
+
+    try {
+      const audio = new Audio(shutterSound);
+      audio.volume = 0.6;
+      audio.play().catch((err) => console.warn("Audio play failed:", err));
+    } catch (e) {
+      console.warn("Audio setup failed:", e);
+    }
+
+    onPortalEnter?.(true);
+  }, [onPortalEnter]);
 
   // Trigger shapes animation ONLY after profile/text animations finish
   useEffect(() => {
@@ -51,10 +81,13 @@ function Hero({ isLoading, onPortalEnter, isPaused = false }) {
   // 3. Add Blur 
   const textBlur = useTransform(scrollYProgress, [0, 0.15], ["blur(0px)", "blur(10px)"]);
 
+  const instructionOpacity = useTransform(scrollYProgress, [0.8, 0.95], [0, 1]);
+  const scrollHintOpacity = useTransform(scrollYProgress, [0, 0.7, 0.8], [1, 1, 0]);
+
   return (
     <section ref={containerRef} className="relative min-h-[250vh]">
       <div 
-        className="sticky top-0 h-screen flex flex-col justify-end overflow-hidden bg-[#1c1917]"
+        className="sticky top-0 h-screen flex flex-col justify-end overflow-hidden bg-umber"
         style={{
           background: 'radial-gradient(circle at center, rgba(80,70,60,0.2) 0%, rgba(20,15,10,0.95) 60%)',
           backgroundColor: '#1c1917'
@@ -69,7 +102,14 @@ function Hero({ isLoading, onPortalEnter, isPaused = false }) {
         </div>
 
         {/* 3D SCENE LAYER */}
-        <CameraScene scrollYProgress={scrollYProgress} onPortalEnter={onPortalEnter} isPaused={isPaused} />
+        <CameraScene
+          scrollYProgress={scrollYProgress}
+          onShutter={triggerShutter}
+          isPaused={isPaused}
+        />
+
+        {/* VIEWFINDER (AIM / FOCUS / SHOOT) */}
+        <Viewfinder progress={scrollYProgress} />
 
         {/* Profile */}
         <div className="w-full h-full flex flex-col justify-end items-center pb-0 relative z-20 pointer-events-none">
@@ -101,14 +141,28 @@ function Hero({ isLoading, onPortalEnter, isPaused = false }) {
                     falloff="linear"
                   />
                 </div>
-                <motion.p 
-                className="text-amber-100/60 text-xl md:text-base font-secondary tracking-tight uppercase mt-4"
-                initial={{ opacity: 0 }}
-                animate={!isLoading ? { opacity: 1 } : {}}
-                transition={{ duration: 1.2, delay: 1.5 }}
+                <motion.div
+                  className="flex flex-col items-center gap-4 mt-4"
+                  initial={{ opacity: 0 }}
+                  animate={!isLoading ? { opacity: 1 } : {}}
+                  transition={{ duration: 1.2, delay: 1.5 }}
                 >
-                NITESH | PHOTOGRAPHY
-                </motion.p>
+                  {/* -mr cancels the trailing letter-spacing so the line is optically centred */}
+                  <p className="flex items-center gap-3 -mr-[0.45em] text-ivory/70 font-primary text-base md:text-lg tracking-[0.45em] uppercase">
+                    <span>{SITE.name}</span>
+                    <span aria-hidden="true" className="inline-block w-1.5 h-1.5 rotate-45 bg-gilt/80" />
+                    <span>Photography</span>
+                  </p>
+                  <a
+                    href={SITE.instagram}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Instagram"
+                    className="pointer-events-auto text-ivory/70 hover:text-gilt transition-colors"
+                  >
+                    <InstagramIcon className="w-6 h-6" />
+                  </a>
+                </motion.div>
             </motion.div>
           </motion.div>
 
@@ -170,7 +224,7 @@ function Hero({ isLoading, onPortalEnter, isPaused = false }) {
           {/* INSTRUCTION */}
           <motion.div
              className="absolute bottom-10 z-50 flex justify-center w-full pointer-events-none mix-blend-difference"
-             style={{ opacity: useTransform(scrollYProgress, [0.8, 0.95], [0, 1]) }}
+             style={{ opacity: instructionOpacity }}
           >
              <motion.p
                className="text-amber-200/80 font-secondary text-sm tracking-widest uppercase"
@@ -181,16 +235,25 @@ function Hero({ isLoading, onPortalEnter, isPaused = false }) {
              </motion.p>
           </motion.div>
 
+          {/* Keyboard / screen-reader entry (the 3D camera itself can't take focus) */}
+          <button
+            type="button"
+            onClick={triggerShutter}
+            className="sr-only focus-visible:not-sr-only focus-visible:fixed focus-visible:bottom-6 focus-visible:left-1/2 focus-visible:-translate-x-1/2 focus-visible:z-[70] focus-visible:px-5 focus-visible:py-2 focus-visible:border focus-visible:border-gilt focus-visible:bg-umber focus-visible:text-gilt focus-visible:font-secondary focus-visible:text-sm focus-visible:tracking-widest focus-visible:uppercase pointer-events-auto"
+          >
+            Take a photo — enter the gallery
+          </button>
+
           {/* SCROLL HINT*/}
           <motion.div
              className="absolute bottom-8 z-50 flex flex-col items-center justify-center w-full pointer-events-none"
-             style={{ opacity: useTransform(scrollYProgress, [0, 0.7, 0.8], [1, 1, 0]) }}
+             style={{ opacity: scrollHintOpacity }}
              initial={{ opacity: 0 }}
              animate={!isLoading ? { opacity: 1 } : {}}
              transition={{ delay: 2.0, duration: 1 }}
           >
-              <motion.img 
-                src={arrowDown} 
+              <motion.img
+                src={arrowDown}
                 alt="Scroll Down"
                 className="w-7 h-7 opacity-60 invert mix-blend-difference"
                 animate={{ y: [0, 10, 0], opacity: [0.4, 1, 0.4] }}

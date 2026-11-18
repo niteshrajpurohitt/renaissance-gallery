@@ -1,5 +1,5 @@
 
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Metamorphous&family=Noto+Sans+Caucasian+Albanian&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 @import "tailwindcss";
 
 
@@ -7,5 +7,11 @@
 @theme {
     --font-primary: 'Cormorant Garamond', serif;
     --font-secondary: 'Inter', sans-serif;
+
+    /* Palette: one gold, one ivory, one ink, one wall colour */
+    --color-gilt: #d4af37;
+    --color-ivory: #efe6d2;
+    --color-sepia: #8a7356;
+    --color-umber: #1c1917;
 }
 

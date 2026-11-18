@@ -109,10 +109,14 @@ const VariableProximity = forwardRef((props, ref) => {
 
     const containerRect = containerRef.current.getBoundingClientRect();
 
+    // Read every letter's position FIRST, then write styles. Interleaving reads and
+    // writes forced a full layout recalculation per letter, on every mouse move.
+    const rects = letterRefs.current.map((el) => el?.getBoundingClientRect());
+
     letterRefs.current.forEach((letterRef, index) => {
       if (!letterRef) return;
 
-      const rect = letterRef.getBoundingClientRect();
+      const rect = rects[index];
       const letterCenterX = rect.left + rect.width / 2 - containerRect.left;
       const letterCenterY = rect.top + rect.height / 2 - containerRect.top;
 
@@ -124,7 +128,10 @@ const VariableProximity = forwardRef((props, ref) => {
       );
 
       if (distance >= radius) {
-        letterRef.style.fontVariationSettings = fromFontVariationSettings;
+        if (interpolatedSettingsRef.current[index] !== fromFontVariationSettings) {
+          interpolatedSettingsRef.current[index] = fromFontVariationSettings;
+          letterRef.style.fontVariationSettings = fromFontVariationSettings;
+        }
         return;
       }
 

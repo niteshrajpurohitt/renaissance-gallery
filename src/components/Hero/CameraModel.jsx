@@ -1,127 +1,124 @@
 import { useGLTF } from '@react-three/drei';
-import { useFrame } from '@react-three/fiber';
-import { useRef } from 'react';
+import { useFrame, useThree } from '@react-three/fiber';
+import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import cameraUrl from '../../assets/camera.glb';
-import shutterSound from '../../assets/shutter.mp3';
 
-export function CameraModel({ scrollYProgress, onPortalEnter, isPaused = false }) {
+const { damp, lerp, smoothstep } = THREE.MathUtils;
+const PI = Math.PI;
+
+const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+const easeInQuad = (t) => t * t;
+
+/*
+ * Scroll choreography. Each keyframe is reached at scroll progress `p`;
+ * `ease` shapes the segment that leads INTO that keyframe.
+ *   0.10 → 0.40  rise & swirl to a top view      (AIM)
+ *   0.45 → 0.70  drop & rotate to face the viewer (FOCUS)
+ *   0.75 → 0.80  push in towards the viewer       (SHOOT)
+ */
+const KEYFRAMES = [
+  { p: 0.1, pos: [-2, -10, 0], rot: [0, PI, PI / 3] },
+  { p: 0.4, pos: [0, 2, 0], rot: [PI / 2, 0, 0], ease: easeOutCubic },
+  { p: 0.45, pos: [0, 2, 0], rot: [PI / 2, 0, 0] },
+  { p: 0.7, pos: [0, 0, 0], rot: [0, 0, 0], ease: easeOutCubic },
+  { p: 0.75, pos: [0, 0, 0], rot: [0, 0, 0] },
+  { p: 0.8, pos: [0, 0, 2], rot: [0, 0, 0], ease: easeInQuad },
+];
+
+function sampleKeyframes(progress, outPos, outRot) {
+  const first = KEYFRAMES[0];
+  const last = KEYFRAMES[KEYFRAMES.length - 1];
+  if (progress <= first.p) {
+    outPos.set(...first.pos);
+    outRot.set(...first.rot);
+    return;
+  }
+  if (progress >= last.p) {
+    outPos.set(...last.pos);
+    outRot.set(...last.rot);
+    return;
+  }
+  for (let i = 1; i < KEYFRAMES.length; i++) {
+    const a = KEYFRAMES[i - 1];
+    const b = KEYFRAMES[i];
+    if (progress <= b.p) {
+      const raw = (progress - a.p) / (b.p - a.p);
+      const t = b.ease ? b.ease(raw) : raw;
+      outPos.set(lerp(a.pos[0], b.pos[0], t), lerp(a.pos[1], b.pos[1], t), lerp(a.pos[2], b.pos[2], t));
+      outRot.set(lerp(a.rot[0], b.rot[0], t), lerp(a.rot[1], b.rot[1], t), lerp(a.rot[2], b.rot[2], t));
+      return;
+    }
+  }
+}
+
+// How strongly the camera follows the cursor: subtle always, strongest while "AIM" is on screen.
+function aimWeight(progress) {
+  const aim = smoothstep(progress, 0.25, 0.38) * (1 - smoothstep(progress, 0.5, 0.58));
+  const settled = smoothstep(progress, 0.78, 0.85);
+  return 0.05 + aim * 0.3 + settled * 0.1;
+}
+
+// How tightly the camera follows the (already smooth) Lenis scroll.
+// ~40 matches the original lerp(0.5)-per-frame at 60fps, but is frame-rate independent.
+const FOLLOW = 40;
+// The cursor tilt and idle float get their own, softer smoothing.
+const TILT_FOLLOW = 6;
+
+export function CameraModel({ scrollYProgress, onShutter, isPaused = false }) {
   const { scene } = useGLTF(cameraUrl);
   const group = useRef();
+  const isMobile = useThree((s) => s.size.width < 768);
+  const targetPos = useRef(new THREE.Vector3()).current;
+  const targetRot = useRef(new THREE.Vector3()).current;
+  const tilt = useRef({ x: 0, y: 0 }).current;
 
-  useFrame(() => {
-    if (!group.current || isPaused) return;
-    
-    // Calculate progress based on scroll
-    // Assuming 0 is top of page, and we want animation to happen as we scroll down
-    const progress = scrollYProgress.get(); 
-    
-   
-    // Phase 1: Entry -> Top (0.1 -> 0.4)
-    const p1Start = 0.1;
-    const p1End = 0.4;
-    
-    // Phase 2: Top -> Center Front (0.45 -> 0.7)
-    const p2Start = 0.45;
-    const p2End = 0.7;
+  useEffect(() => () => { document.body.style.cursor = 'auto'; }, []);
 
-    // Phase 3: Zoom In (0.75 -> 0.9)
-    const p3Start = 0.75;
-    const p3End = 0.8;
-    
-    // Default / Start State
-    let targetY = -10; 
-    let targetX = -2;
-    let targetZ = 0;
-    
-    let targetRotX = 0;
-    let targetRotY = Math.PI; 
-    let targetRotZ = Math.PI / 3;
+  useFrame((state, delta) => {
+    const g = group.current;
+    if (!g || isPaused) return;
+    const dt = Math.min(delta, 1 / 20); // avoid jumps after a tab switch
+    const t = state.clock.elapsedTime;
+    const progress = scrollYProgress.get();
 
-    if (progress <= p1End) {
-      // PHASE 1: RISE & SWIRL TO TOP
-      if (progress > p1Start) {
-        const t = Math.min(1, (progress - p1Start) / (p1End - p1Start));
-        const ease = 1 - Math.pow(1 - t, 3);
-        
-        targetY = -10 + (ease * 12); // Rise to Top
-        targetX = -2 + (ease * 2);   // Move Left -> Center
-        
-        targetRotX = ease * (Math.PI / 2); // Front -> Top
-        targetRotY = Math.PI - (ease * Math.PI); // Side -> Front(Top)
-        targetRotZ = (Math.PI / 3) - (ease * (Math.PI / 3)); 
-      }
-    } else if (progress <= p2End) {
-       // PHASE 1 FINAL STATE (Baseline for Phase 2)
-       targetY = 2; // Top
-       targetX = 0;
-       targetRotX = Math.PI / 2; // Top View
-       targetRotY = 0;
-       targetRotZ = 0;
+    sampleKeyframes(progress, targetPos, targetRot);
 
-       // PHASE 2: DROP & ROTATE TO FRONT
-       if (progress > p2Start) {
-         const t = Math.min(1, (progress - p2Start) / (p2End - p2Start));
-         const ease = 1 - Math.pow(1 - t, 3);
-         
-         targetY = 2 - (ease * 2); // Top (2) -> Center (0)
-         
-         // Rotate Top View (PI/2) back to Front View (0)
-         targetRotX = (Math.PI / 2) - (ease * (Math.PI / 2));
-       }
-    } else {
-       // PHASE 2 FINAL STATE (Baseline for Phase 3)
-       targetY = 0;
-       targetX = 0;
-       targetRotX = 0; // Front View
-       targetRotY = 0;
-       targetRotZ = 0;
+    // Cursor tilt is smoothed separately so the scroll path itself stays responsive.
+    const w = aimWeight(progress);
+    tilt.x = damp(tilt.x, -state.pointer.y * w * 0.6, TILT_FOLLOW, dt);
+    tilt.y = damp(tilt.y, state.pointer.x * w, TILT_FOLLOW, dt);
 
-       // PHASE 3: STABILIZE & FLASH (Simple Zoom)
-       if (progress > p3Start) {
-          const t = Math.min(1, (progress - p3Start) / (p3End - p3Start));
-          const ease = t * t; 
-          
-          targetZ = ease * 2; // Slight zoom, not deep portal
-          
-          
-       }
-    }
+    // Idle life: a slow float and a hint of sway.
+    targetPos.y += Math.sin(t * 1.1) * 0.06;
+    targetRot.x += tilt.x;
+    targetRot.y += tilt.y;
+    targetRot.z += Math.sin(t * 0.7) * 0.02;
 
-    // Smooth interop 
-    const damp = 0.5;
-    group.current.position.y = THREE.MathUtils.lerp(group.current.position.y, targetY, damp);
-    group.current.position.x = THREE.MathUtils.lerp(group.current.position.x, targetX, damp);
-    group.current.position.z = THREE.MathUtils.lerp(group.current.position.z, targetZ, damp); // Add Z
-    group.current.rotation.x = THREE.MathUtils.lerp(group.current.rotation.x, targetRotX, damp);
-    group.current.rotation.y = THREE.MathUtils.lerp(group.current.rotation.y, targetRotY, damp);
-    group.current.rotation.z = THREE.MathUtils.lerp(group.current.rotation.z, targetRotZ, damp);
+    const lambda = FOLLOW;
+
+    g.position.set(
+      damp(g.position.x, targetPos.x, lambda, dt),
+      damp(g.position.y, targetPos.y, lambda, dt),
+      damp(g.position.z, targetPos.z, lambda, dt),
+    );
+    g.rotation.set(
+      damp(g.rotation.x, targetRot.x, lambda, dt),
+      damp(g.rotation.y, targetRot.y, lambda, dt),
+      damp(g.rotation.z, targetRot.z, lambda, dt),
+    );
   });
 
-  // Responsive Scale (Simple check)
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const baseScale = isMobile ? 0.018 : 0.025;
-
   return (
-    <primitive 
-      ref={group} 
-      object={scene} 
-      scale={baseScale} 
-      position={[-5, -10, 0]} 
-      rotation={[0, 0, 0]}
+    <primitive
+      ref={group}
+      object={scene}
+      scale={isMobile ? 0.018 : 0.025}
+      position={KEYFRAMES[0].pos}
+      rotation={KEYFRAMES[0].rot}
       onClick={(e) => {
-         e.stopPropagation();
-         
-         // Audio Trigger
-         try {
-           const audio = new Audio(shutterSound);
-           audio.volume = 0.6;
-           audio.play().catch(err => console.warn("Audio play failed:", err));
-         } catch (e) {
-           console.warn("Audio setup failed:", e);
-         }
-
-         onPortalEnter?.(true); 
+        e.stopPropagation();
+        onShutter?.();
       }}
       onPointerOver={() => { document.body.style.cursor = 'pointer'; }}
       onPointerOut={() => { document.body.style.cursor = 'auto'; }}
